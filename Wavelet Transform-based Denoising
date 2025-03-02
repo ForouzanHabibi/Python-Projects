@@ -1,0 +1,25 @@
+import pywt
+
+# Perform Wavelet Transform
+coeffs2 = pywt.wavedec2(wavefront, 'db4', level=3)
+
+# Thresholding for denoising
+threshold = 0.2
+coeffs2_filtered = list(map(lambda x: pywt.threshold(x, threshold, mode='soft'), coeffs2))
+
+# Reconstruct wavefront
+filtered_wavefront = pywt.waverec2(coeffs2_filtered, 'db4')
+
+# Plot Results
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.imshow(wavefront, cmap='jet')
+plt.colorbar(label='Wavefront Aberration (radians)')
+plt.title('Original Wavefront')
+
+plt.subplot(1, 2, 2)
+plt.imshow(filtered_wavefront, cmap='jet')
+plt.colorbar(label='Wavefront Aberration (radians)')
+plt.title('Wavelet-Denoised Wavefront')
+
+plt.show()
