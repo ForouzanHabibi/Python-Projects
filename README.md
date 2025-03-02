@@ -1,1 +1,35 @@
 # Python Code for Simulating Optical Wavefront Aberration
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.special import eval_polynomial
+from scipy.fftpack import fft2, ifft2, fftshift
+
+# Function to generate Zernike polynomials
+def zernike(n, m, r, theta):
+    if m >= 0:
+        return eval_polynomial(n, m, r) * np.cos(m * theta)
+    else:
+        return eval_polynomial(n, -m, r) * np.sin(-m * theta)
+
+# Generate grid
+N = 256  # Grid size
+x = np.linspace(-1, 1, N)
+y = np.linspace(-1, 1, N)
+X, Y = np.meshgrid(x, y)
+R = np.sqrt(X**2 + Y**2)
+Theta = np.arctan2(Y, X)
+
+# Apply Zernike modes (Example: n=3, m=1 for coma aberration)
+wavefront = zernike(3, 1, R, Theta)
+
+# Mask the wavefront (only valid inside unit circle)
+wavefront[R > 1] = 0
+
+# Plot wavefront aberration
+plt.figure(figsize=(6, 5))
+plt.imshow(wavefront, cmap='jet', extent=[-1, 1, -1, 1])
+plt.colorbar(label='Wavefront Aberration (radians)')
+plt.title('Zernike Aberration (n=3, m=1) - Coma')
+plt.xlabel('X-axis')
+plt.ylabel('Y-axis')
+plt.show()
