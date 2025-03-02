@@ -1,0 +1,36 @@
+def kolmogorov_phase_screen(N, D, r0):
+    """
+    Generate a Kolmogorov phase screen using Fourier methods.
+    :param N: Grid size (N x N)
+    :param D: Aperture diameter
+    :param r0: Fried’s parameter (seeing parameter)
+    :return: Phase screen
+    """
+    dk = 2 * np.pi / D
+    kx = np.fft.fftfreq(N, d=1/N) * dk
+    ky = np.fft.fftfreq(N, d=1/N) * dk
+    KX, KY = np.meshgrid(kx, ky)
+    K = np.sqrt(KX**2 + KY**2)
+    K[N//2, N//2] = 1e-6  # Avoid division by zero
+
+    # Kolmogorov power spectrum
+    Phi_K = (K**(-11/3)) * np.exp(-K**2 * (r0**(-5/3)))
+
+    # Generate complex random field
+    random_phase = np.exp(1j * 2 * np.pi * np.random.rand(N, N))
+    phase_screen = np.real(ifft2(fft2(random_phase) * np.sqrt(Phi_K)))
+    
+    return phase_screen
+
+# Generate and plot the turbulence phase screen
+D = 0.2  # Aperture diameter (m)
+r0 = 0.1  # Fried parameter (m)
+turbulence_screen = kolmogorov_phase_screen(N=256, D=D, r0=r0)
+
+plt.figure(figsize=(6, 5))
+plt.imshow(turbulence_screen, cmap='jet', extent=[-1, 1, -1, 1])
+plt.colorbar(label='Phase (radians)')
+plt.title('Kolmogorov Turbulence Phase Screen')
+plt.xlabel('X-axis')
+plt.ylabel('Y-axis')
+plt.show()
