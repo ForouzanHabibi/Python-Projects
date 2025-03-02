@@ -1,0 +1,41 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.fftpack import fft2, fftshift
+
+# Define grid
+N = 256
+x = np.linspace(-1, 1, N)
+y = np.linspace(-1, 1, N)
+X, Y = np.meshgrid(x, y)
+R = np.sqrt(X**2 + Y**2)
+
+# Generate aberrated wavefront (coma example)
+wavefront = 3 * (2 * R**3 - 3 * R)  # Zernike n=3, m=1
+
+# Simulate correction (flattening the wavefront)
+corrected_wavefront = wavefront - np.mean(wavefront)
+
+# Compute PSF as Fourier Transform of pupil function
+pupil_function = np.exp(1j * wavefront)
+corrected_pupil = np.exp(1j * corrected_wavefront)
+
+psf_before = np.abs(fftshift(fft2(pupil_function)))**2
+psf_after = np.abs(fftshift(fft2(corrected_pupil)))**2
+
+# Normalize PSF
+psf_before /= np.max(psf_before)
+psf_after /= np.max(psf_after)
+
+# Plot results
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.imshow(psf_before, cmap='hot', extent=[-1, 1, -1, 1])
+plt.colorbar(label='Normalized Intensity')
+plt.title('Aberrated PSF')
+
+plt.subplot(1, 2, 2)
+plt.imshow(psf_after, cmap='hot', extent=[-1, 1, -1, 1])
+plt.colorbar(label='Normalized Intensity')
+plt.title('Corrected PSF')
+
+plt.show()
