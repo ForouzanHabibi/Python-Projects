@@ -1,0 +1,53 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def zernike_radial(n, m, r):
+    """
+    Compute the radial polynomial R_n^m(r) for Zernike polynomials.
+    n: radial order
+    m: azimuthal frequency (use absolute value for m)
+    r: radial coordinate (0 <= r <= 1)
+    """
+    R = np.zeros_like(r)
+    for s in range((n - abs(m)) // 2 + 1):
+        num = (-1)**s * np.math.factorial(n - s)
+        den = (np.math.factorial(s) *
+               np.math.factorial((n + abs(m))//2 - s) *
+               np.math.factorial((n - abs(m))//2 - s))
+        R += num/den * r**(n - 2*s)
+    return R
+
+def zernike(n, m, r, theta):
+    """
+    Compute the Zernike polynomial Z_n^m(r, theta).
+    For m >= 0: Z = R_n^m(r)*cos(m*theta)
+    For m < 0:  Z = R_n^|m|(r)*sin(|m|*theta)
+    """
+    if m >= 0:
+        return zernike_radial(n, m, r) * np.cos(m * theta)
+    else:
+        return zernike_radial(n, -m, r) * np.sin(-m * theta)
+
+# Create a pupil grid
+N = 256
+x = np.linspace(-1, 1, N)
+y = np.linspace(-1, 1, N)
+X, Y = np.meshgrid(x, y)
+R = np.sqrt(X**2 + Y**2)
+Theta = np.arctan2(Y, X)
+
+# Define a circular pupil (unit circle)
+pupil_mask = R <= 1
+
+# Compute the Zernike aberration (using coma: n = 3, m = 1)
+wavefront = np.zeros_like(R)
+wavefront[pupil_mask] = zernike(3, 1, R[pupil_mask], Theta[pupil_mask])
+
+# Plot the Zernike wavefront aberration
+plt.figure(figsize=(6, 5))
+plt.imshow(wavefront, cmap='jet', extent=[-1, 1, -1, 1])
+plt.colorbar(label='Phase (radians)')
+plt.title('Zernike Aberration (n=3, m=1) - Coma')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.show()
