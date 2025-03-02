@@ -1,0 +1,23 @@
+from pykalman import KalmanFilter
+
+# Kalman Filter Setup
+kf = KalmanFilter(initial_state_mean=0, n_dim_obs=1)
+measurements = wavefront.flatten() + 0.2 * np.random.randn(N*N)  # Noisy measurements
+filtered_state_means, _ = kf.filter(measurements)
+
+# Reshape back to 2D wavefront
+filtered_wavefront = filtered_state_means.reshape(N, N)
+
+# Plot results
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.imshow(wavefront, cmap='jet')
+plt.colorbar(label='Wavefront Aberration (radians)')
+plt.title('Original Wavefront')
+
+plt.subplot(1, 2, 2)
+plt.imshow(filtered_wavefront, cmap='jet')
+plt.colorbar(label='Wavefront Aberration (radians)')
+plt.title('Kalman-Filtered Wavefront')
+
+plt.show()
