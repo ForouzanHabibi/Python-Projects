@@ -1,0 +1,47 @@
+import gym
+import numpy as np
+import matplotlib.pyplot as plt
+from stable_baselines3 import PPO
+
+class AdaptiveOpticsEnv(gym.Env):
+    """Custom environment for learning adaptive optics correction."""
+    def __init__(self):
+        super(AdaptiveOpticsEnv, self).__init__()
+        self.wavefront = 3 * (2 * R**3 - 3 * R)  # Initial aberration
+        self.action_space = gym.spaces.Box(low=-1, high=1, shape=(20, 20), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=-5, high=5, shape=self.wavefront.shape, dtype=np.float32)
+
+    def reset(self):
+        """Reset the wavefront (new aberration)"""
+        self.wavefront = 3 * (2 * R**3 - 3 * R) + 0.1 * np.random.randn(*self.wavefront.shape)
+        return self.wavefront
+
+    def step(self, action):
+        """Apply correction"""
+        correction = np.interp(R, np.linspace(0, 1, 20), action.mean(axis=0))
+        self.wavefront -= correction
+        reward = -np.std(self.wavefront)  # Minimize variance
+        return self.wavefront, reward, False, {}
+
+# Train RL Agent
+env = AdaptiveOpticsEnv()
+model = PPO("MlpPolicy", env, verbose=1)
+model.learn(total_timesteps=50000)
+
+# Apply trained model
+obs = env.reset()
+corrected_wavefront, _, _, _ = env.step(model.predict(obs)[0])
+
+# Plot results
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.imshow(obs, cmap='jet', extent=[-1, 1, -1, 1])
+plt.colorbar(label='Wavefront Aberration (radians)')
+plt.title('Original Wavefront')
+
+plt.subplot(1, 2, 2)
+plt.imshow(corrected_wavefront, cmap='jet', extent=[-1, 1, -1, 1])
+plt.colorbar(label='Corrected Wavefront')
+plt.title('Machine Learning Optimized Correction')
+
+plt.show()
