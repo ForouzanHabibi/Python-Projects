@@ -1,0 +1,35 @@
+# Simulate a deformable mirror with 20 actuators
+num_actuators = 20
+DM_surface = np.zeros((num_actuators, num_actuators))
+
+# Apply correction iteratively
+iterations = 10
+corrected_wavefront = wavefront.copy()
+
+for _ in range(iterations):
+    # Compute wavefront gradients
+    grad_x, grad_y = np.gradient(corrected_wavefront)
+
+    # Simulate DM actuator response (inverse wavefront slopes)
+    DM_surface -= 0.5 * (grad_x[::N//num_actuators, ::N//num_actuators] +
+                         grad_y[::N//num_actuators, ::N//num_actuators])
+
+    # Interpolate to match wavefront grid
+    DM_correction = np.interp(R, np.linspace(0, 1, num_actuators), DM_surface.mean(axis=0))
+
+    # Apply correction
+    corrected_wavefront -= DM_correction
+
+# Plot results
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.imshow(wavefront, cmap='jet', extent=[-1, 1, -1, 1])
+plt.colorbar(label='Wavefront Aberration (radians)')
+plt.title('Original Aberrated Wavefront')
+
+plt.subplot(1, 2, 2)
+plt.imshow(corrected_wavefront, cmap='jet', extent=[-1, 1, -1, 1])
+plt.colorbar(label='Corrected Wavefront')
+plt.title('Deformable Mirror Corrected Wavefront')
+
+plt.show()
