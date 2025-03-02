@@ -1,0 +1,37 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter
+
+# Generate aberrated wavefront (using Zernike polynomial example)
+N = 256  # Grid size
+x = np.linspace(-1, 1, N)
+y = np.linspace(-1, 1, N)
+X, Y = np.meshgrid(x, y)
+R = np.sqrt(X**2 + Y**2)
+wavefront = 3 * (2 * R**3 - 3 * R)  # Example coma aberration
+
+# Simulate Shack-Hartmann spot displacement
+gradient_x, gradient_y = np.gradient(wavefront)  # Wavefront slope
+sh_spots = np.zeros((N, N))
+
+# Create synthetic SHWS spot pattern
+num_spots = 20  # Number of lenslets
+spacing = N // num_spots
+
+for i in range(num_spots):
+    for j in range(num_spots):
+        cx, cy = i * spacing + spacing // 2, j * spacing + spacing // 2
+        shift_x, shift_y = gradient_x[cx, cy], gradient_y[cx, cy]
+        sh_spots[cx + int(shift_x * 10), cy + int(shift_y * 10)] = 1
+
+# Apply Gaussian filter to simulate realistic spots
+sh_spots = gaussian_filter(sh_spots, sigma=2)
+
+# Plot results
+plt.figure(figsize=(6, 5))
+plt.imshow(sh_spots, cmap='hot', extent=[-1, 1, -1, 1])
+plt.colorbar(label='Spot Intensity')
+plt.title('Simulated Shack-Hartmann Sensor Output')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.show()
